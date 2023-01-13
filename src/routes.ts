@@ -1,0 +1,86 @@
+import {CinemaController} from "./controller/CinemaController";
+import {CityController} from "./controller/CityController";
+import {HintController} from "./controller/HintController";
+import {MovieController} from "./controller/MovieController";
+
+export const Routes = [{
+    method: "get",
+    route: "/cinema",
+    controller: CinemaController,
+    action: "all"
+}, {
+    method: "get",
+    route: "/cinema/:id",
+    controller: CinemaController,
+    action: "one"
+}, {
+    method: "post",
+    route: "/cinema",
+    controller: CinemaController,
+    action: "save"
+}, {
+    method: "delete",
+    route: "/cinema/:id",
+    controller: CinemaController,
+    action: "remove"
+}, {
+    method: "get",
+    route: "/city",
+    controller: CityController,
+    action: "all"
+}, {
+    method: "get",
+    route: "/city/:id",
+    controller: CityController,
+    action: "one"
+}, {
+    method: "post",
+    route: "/city",
+    controller: CityController,
+    action: "save"
+}, {
+    method: "delete",
+    route: "/city/:id",
+    controller: CityController,
+    action: "remove"
+}, {
+    method: "get",
+    route: "/hint",
+    controller: HintController,
+    action: "all"
+}, {
+    method: "get",
+    route: "/hint/:id",
+    controller: HintController,
+    action: "one"
+}, {
+    method: "post",
+    route: "/hint",
+    controller: HintController,
+    action: "save"
+}, {
+    method: "delete",
+    route: "/hint/:id",
+    controller: HintController,
+    action: "remove"
+}, {
+    method: "get",
+    route: "/movie",
+    controller: MovieController,
+    action: "all"
+}, {
+    method: "get",
+    route: "/movie/:id",
+    controller: MovieController,
+    action: "one"
+}, {
+    method: "post",
+    route: "/movie",
+    controller: MovieController,
+    action: "save"
+}, {
+    method: "delete",
+    route: "/movie/:id",
+    controller: MovieController,
+    action: "remove"
+}];
