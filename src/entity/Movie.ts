@@ -14,4 +14,7 @@ export class Movie {
 
     @Column("int")
     rating: number;
+
+    @Column()
+    genres: string
 }
