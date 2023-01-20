@@ -3,8 +3,11 @@ import {Entity, Column, PrimaryColumn} from "typeorm";
 @Entity()
 export class Movie {
 
-    @PrimaryColumn("varchar", { length: 12 })
+    @Column("varchar", { length: 12 })
     imdbId: string;
+
+    @PrimaryColumn()
+    tmdbId: number;
 
     @Column()
     name: string;
