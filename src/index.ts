@@ -36,11 +36,10 @@ function main() {
     // start express server
     app.listen(3000);
     //serve client frontend
-    app.use("/", express.static("static"));
+    //app.use("/", express.static("static"));
 
     console.log("Express server has started on port 3000.");
-    console.log(" - API at http://localhost:3000/api/city");
-    console.log(" - GUI at http://localhost:3000/static");
+    console.log(" - API at https://api.sneakprognose.de/cinemas");
 }
 
 /**
@@ -51,13 +50,13 @@ function afterInitialize() {
     registerApiRoutes(app);
 
     // importCitiesAndCinemas()
-    importHints();
+    // importHints();
     // backupHintsAndMovies();
 }
 
 
 function importCitiesAndCinemas() {
-    fs.readFile("./src/resources/cinemas.json", "utf-8", (async (err, data) => {
+    fs.readFile("./resources/cinemas.json", "utf-8", (async (err, data) => {
         if (err) {
             console.log(err);
         } else {

@@ -9,7 +9,7 @@ import {ConnectionIsNotSetError} from "typeorm";
 import {createTransport} from "nodemailer";
 
 export function registerApiRoutes(app: Express) {
-    let apiEndpoint = "/api/";
+    let apiEndpoint = "/";
     // === get cinema ===
     // params: -
     app.get(apiEndpoint + "cinema", async (req, res) => {
@@ -45,7 +45,7 @@ export function registerApiRoutes(app: Express) {
                 .createQueryBuilder("hint")
                 .where("hint.cinema = :cinemaId ", {cinemaId: parseInt(req.query.cinemaId)})
                 .innerJoinAndSelect("hint.movie", "movie")
-                .orderBy("releaseDate", "DESC")
+                .orderBy("hint.date", "DESC")
                 .addOrderBy("score", "DESC")
                 .getMany();
             res.json(hints);
@@ -87,7 +87,7 @@ export function registerApiRoutes(app: Express) {
                 await AppDataSource.getRepository(Movie).save(movie);
             } else {
                 let hint = await AppDataSource.getRepository(Hint)
-                    .findOneBy({movie: movie, date: sneakDate.toJSDate()});
+                    .findOneBy({movie: movie, date: sneakDate.toJSDate(), cinema: {id: cinemaId}});
                 if (hint != null) {
                     res.json({error: "Sneak ist bereits eingetragen."});
                     return;
@@ -175,6 +175,8 @@ export function registerApiRoutes(app: Express) {
                 res.json({"status": "Kino wurde eingereicht."});
             } catch (e) {
                 res.json({"status": "Senden fehlgeschlagen"});
+                console.log("Faild sending mail:");
+                console.error(e);
             }
         } else {
             res.status(400).send("cinemaName or cinemaCity missing");
@@ -274,11 +276,11 @@ export async function createNewMovieTmdb(tmdbId: number): Promise<Movie> {
 }
 
 let transporter = createTransport({
-    host: "***",
+    host: process.env.SMTP_ADDR,
     port: 465,
     secure: true,
     auth: {
-        user: "***",
-        pass: "***",
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PW
     },
 });
