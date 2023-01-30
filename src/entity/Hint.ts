@@ -20,4 +20,7 @@ export class Hint {
     @ManyToOne(type => Movie, movie => movie.imdbId)
     movie: Movie;
 
+    @Column({type: "int", default: -1})
+    guess: number;
+
 }

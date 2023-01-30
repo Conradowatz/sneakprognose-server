@@ -5,6 +5,7 @@ export const AppDataSource = new DataSource({
     //"host": "localhost",
     "host": process.env.DB_HOST,
     "port": 3306,
+    //"port": 7777,
     //"username": "sneak-user",
     //"password": "pw",
     //"database": "sneak-db",

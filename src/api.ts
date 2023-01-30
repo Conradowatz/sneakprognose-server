@@ -44,6 +44,7 @@ export function registerApiRoutes(app: Express) {
             const hints = await AppDataSource.getRepository(Hint)
                 .createQueryBuilder("hint")
                 .where("hint.cinema = :cinemaId ", {cinemaId: parseInt(req.query.cinemaId)})
+                .andWhere("DATEDIFF(CURRENT_DATE(), hint.date) < 100")
                 .innerJoinAndSelect("hint.movie", "movie")
                 .orderBy("hint.date", "DESC")
                 .addOrderBy("score", "DESC")
@@ -72,9 +73,10 @@ export function registerApiRoutes(app: Express) {
                 res.status(400).send("wrong cinemaId");
                 return;
             }
-            let movie = await AppDataSource.getRepository(Movie).findOneBy({tmdbId: req.body.tmdbId});
+            let isMovieNew = false;
+            let movie = await AppDataSource.getRepository(Movie).findOneBy({tmdbId: parseInt(req.body.tmdbId)});
             if (movie == null) {
-                movie = await createNewMovieTmdb(req.body.tmdbId);
+                movie = await createNewMovieTmdb(parseInt(req.body.tmdbId));
                 if (movie == null) {
                     res.status(400).send("Could not create movie hint")
                     return;
@@ -85,6 +87,7 @@ export function registerApiRoutes(app: Express) {
                     return;
                 }
                 await AppDataSource.getRepository(Movie).save(movie);
+                isMovieNew = true;
             } else {
                 let hint = await AppDataSource.getRepository(Hint)
                     .findOneBy({movie: movie, date: sneakDate.toJSDate(), cinema: {id: cinemaId}});
@@ -93,11 +96,32 @@ export function registerApiRoutes(app: Express) {
                     return;
                 }
             }
-            // get cinema
+            // was it guessed correctly?
+            const qb = await AppDataSource.getRepository(Movie).createQueryBuilder("movie");
+            const guesses = await qb
+                .innerJoin(Hint, "hint", "movie.tmdbId = hint.movie")
+                .addSelect("(COUNT(hint.id) / (POWER(DATEDIFF(movie.releaseDate, :sneakDate), 0.5) * AVG(DATEDIFF(:sneakDate, hint.date))))", "confidence")
+                .andWhere("movie.releaseDate > :sneakDate", {sneakDate: sneakDate.toJSDate()})
+                .andWhere("hint.score >= 0")
+                .andWhere("DATEDIFF(:sneakDate, hint.date) < 100")
+                .andWhere("hint.date < :sneakDate")
+                .andWhere(":cinemaId NOT IN " +
+                    qb.subQuery()
+                        .select("hint2.cinema")
+                        .from(Hint, "hint2")
+                        .where("hint2.movie = movie.tmdbId")
+                        .getQuery(), {cinemaId: cinemaId})
+                .groupBy("movie.tmdbId")
+                .orderBy("confidence", "DESC")
+                .limit(10)
+                .getRawMany();
+            let movieIds = guesses.map(guess => guess.movie_tmdbId);
+            // create hint
             const hint = await AppDataSource.getRepository(Hint).create({
                 date: sneakDate.toJSDate(),
                 cinema: {id: cinemaId},
-                movie: movie
+                movie: movie,
+                guess: isMovieNew ? -1 : movieIds.indexOf(movie.tmdbId)+1
             });
             await AppDataSource.getRepository(Hint).save(hint);
             res.json(hint);
@@ -125,23 +149,16 @@ export function registerApiRoutes(app: Express) {
     // params: cinemaId
     app.get(apiEndpoint + "sneak", async (req, res) => {
         if ("cinemaId" in req.query && typeof req.query.cinemaId === "string" && !isNaN(parseInt(req.query.cinemaId))) {
-            /*const guesses1 = await AppDataSource.getRepository(Movie).createQueryBuilder("movie")
-                .innerJoin(Hint, "hint", "movie.imdbId = hint.movie")
-                .addSelect("COUNT(hint.id)", "count")
-                .addSelect("GROUP_CONCAT(DISTINCT hint.cinema)", "cinemas")
-                .andWhere("movie.releaseDate > CURRENT_DATE()")
-                .groupBy("movie.imdbId")
-                .having(":cinemaId NOT IN (cinemas)", {cinemaId: parseInt(req.query.cinemaId)})
-                .orderBy("count", "DESC")
-                .getRawMany();*/
             const qb = await AppDataSource.getRepository(Movie).createQueryBuilder("movie");
             const guesses = await qb
                 .innerJoin(Hint, "hint", "movie.tmdbId = hint.movie")
-                .addSelect("COUNT(hint.id)", "count")
+                //.addSelect("COUNT(hint.id)", "count")
                 .addSelect("DATEDIFF(movie.releaseDate, CURRENT_DATE())", "daysTill")
-                .addSelect("(POWER(COUNT(hint.id), 1.2) / DATEDIFF(movie.releaseDate, CURRENT_DATE()))", "confidence")
+                //.addSelect("AVG(DATEDIFF(CURRENT_DATE(), hint.date))", "sneakedMost")
+                .addSelect("(COUNT(hint.id) / (POWER(DATEDIFF(movie.releaseDate, CURRENT_DATE()), 0.5) * AVG(DATEDIFF(CURRENT_DATE(), hint.date))))", "confidence")
                 .andWhere("movie.releaseDate > CURRENT_DATE()")
                 .andWhere("hint.score >= 0")
+                .andWhere("DATEDIFF(CURRENT_DATE(), hint.date) < 100")
                 .andWhere(":cinemaId NOT IN " +
                     qb.subQuery()
                         .select("hint2.cinema")
@@ -181,6 +198,15 @@ export function registerApiRoutes(app: Express) {
         } else {
             res.status(400).send("cinemaName or cinemaCity missing");
         }
+    });
+    // === get correct guesses ===
+    app.get(apiEndpoint + "correct", async (req, res) => {
+        let correct = await AppDataSource.getRepository(Hint).createQueryBuilder("hint")
+            .select("hint.guess", "guess")
+            .addSelect("COUNT(hint.guess)", "count")
+            .groupBy("hint.guess")
+            .getRawMany()
+        res.json(correct);
     });
 }
 
