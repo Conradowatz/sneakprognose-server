@@ -277,10 +277,6 @@ export async function createNewMovieTmdb(tmdbId: number): Promise<Movie> {
                 releaseDate = DateTime.fromISO(rdResultDe["release_date"]);
             }
         }
-        if (!releaseDate.isValid) {
-            console.log("invalid releaseDate: " + releaseDate.invalidReason);
-            releaseDate = null;
-        }
         //get genres
         let genres = [];
         for (let genre of apiMovie["genres"]) {
@@ -290,7 +286,7 @@ export async function createNewMovieTmdb(tmdbId: number): Promise<Movie> {
             imdbId: apiMovie["imdb_id"],
             tmdbId: tmdbId,
             name: apiMovie["title"],
-            releaseDate: releaseDate.toJSDate(),
+            releaseDate: releaseDate.isValid ? releaseDate.toJSDate() : null,
             rating: apiMovie["vote_average"]*10,
             genres: genres.join(", ")
         });
@@ -310,3 +306,17 @@ let transporter = createTransport({
         pass: process.env.SMTP_PW
     },
 });
+
+export async function updateMovieInfos() {
+    if (!AppDataSource.isInitialized) {
+        return;
+    }
+    let movies = await AppDataSource.getRepository(Movie).createQueryBuilder("movie")
+        .where("movie.releaseDate > CURRENT_DATE()")
+        .getMany();
+    for (let movie of movies) {
+        let updatedMovie = await createNewMovieTmdb(movie.tmdbId);
+        await AppDataSource.getRepository(Movie).save(updatedMovie);
+    }
+    console.log("Updated movie infos.");
+}

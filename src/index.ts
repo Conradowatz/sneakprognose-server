@@ -5,7 +5,7 @@ import {AppDataSource} from "./app-data-source";
 import {City} from "./entity/City";
 import {Cinema} from "./entity/Cinema";
 import * as fs from "fs";
-import {createNewMovieTmdb, registerApiRoutes} from "./api";
+import {createNewMovieTmdb, registerApiRoutes, updateMovieInfos} from "./api";
 import {Hint} from "./entity/Hint";
 import {Movie} from "./entity/Movie";
 import {DateTime} from "luxon";
@@ -48,6 +48,9 @@ function main() {
 function afterInitialize() {
     // register api routes
     registerApiRoutes(app);
+    // create movie info update loop (runs every 24 hours)
+    updateMovieInfos();
+    setInterval(updateMovieInfos, 1000*60*60*24);
 
     // importCitiesAndCinemas()
     // importHints();
