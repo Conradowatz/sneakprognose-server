@@ -192,7 +192,7 @@ export function registerApiRoutes(app: Express) {
                 res.json({"status": "Kino wurde eingereicht."});
             } catch (e) {
                 res.json({"status": "Senden fehlgeschlagen"});
-                console.log("Faild sending mail:");
+                console.log("Failed sending mail:");
                 console.error(e);
             }
         } else {
@@ -204,9 +204,17 @@ export function registerApiRoutes(app: Express) {
         let correct = await AppDataSource.getRepository(Hint).createQueryBuilder("hint")
             .select("hint.guess", "guess")
             .addSelect("COUNT(hint.guess)", "count")
+            .where("id > 418")
             .groupBy("hint.guess")
             .getRawMany()
         res.json(correct);
+    });
+    // === get null date movies ===
+    app.get(apiEndpoint + "no_date", async (req, res) => {
+        let movies = await AppDataSource.getRepository(Movie).createQueryBuilder("movie")
+            .where("ISNULL(releaseDate)")
+            .getMany();
+        res.json(movies);
     });
 }
 
@@ -313,6 +321,7 @@ export async function updateMovieInfos() {
     }
     let movies = await AppDataSource.getRepository(Movie).createQueryBuilder("movie")
         .where("movie.releaseDate > CURRENT_DATE()")
+        .orWhere("ISNULL(movie.releaseDate)")
         .getMany();
     for (let movie of movies) {
         let updatedMovie = await createNewMovieTmdb(movie.tmdbId);
