@@ -3,7 +3,7 @@ import {Entity, Column, PrimaryColumn} from "typeorm";
 @Entity()
 export class Movie {
 
-    @Column("varchar", { length: 12 })
+    @Column("varchar", { length: 12, nullable: true })
     imdbId: string;
 
     @PrimaryColumn()
@@ -12,7 +12,7 @@ export class Movie {
     @Column()
     name: string;
 
-    @Column("date")
+    @Column("date", {nullable: true})
     releaseDate: Date;
 
     @Column("int")
