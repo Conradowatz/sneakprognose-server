@@ -90,7 +90,7 @@ export function registerApiRoutes(app: Express) {
                 isMovieNew = true;
             } else {
                 let hint = await AppDataSource.getRepository(Hint)
-                    .findOneBy({movie: movie, date: sneakDate.toJSDate(), cinema: {id: cinemaId}});
+                    .findOneBy({movie: {tmdbId: movie.tmdbId}, date: sneakDate.toJSDate(), cinema: {id: cinemaId}});
                 if (hint != null) {
                     res.json({error: "Sneak ist bereits eingetragen."});
                     return;
