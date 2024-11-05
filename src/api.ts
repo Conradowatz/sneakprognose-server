@@ -281,8 +281,9 @@ export async function createNewMovieTmdb(tmdbId: number): Promise<Movie> {
         for (let rdResult of apiMovie["release_dates"]["results"]) {
             if (rdResult["iso_3166_1"] != "DE") continue;
             for (let rdResultDe of rdResult["release_dates"]) {
-                if (rdResultDe["type"] != 3) continue;
+                if (rdResultDe["type"] != 2 && rdResultDe["type"] != 3) continue;
                 releaseDate = DateTime.fromISO(rdResultDe["release_date"]);
+                if (rdResultDe["type"] == 3) break;
             }
         }
         //get genres
