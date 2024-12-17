@@ -237,6 +237,8 @@ function extractImdbId(urlStr): string | null {
     }
 }
 
+const imdbApiKey = process.env.IMDB_KEY;
+// const imdbApiKey = "replace for development";
 export async function createNewMovieImdb(imdbId: string, startDate: DateTime): Promise<Movie> {
     try {
         let res = await fetch(`https://imdb-api.com/de/API/Title/${imdbApiKey}/${imdbId}`);
@@ -268,6 +270,8 @@ export async function createNewMovieImdb(imdbId: string, startDate: DateTime): P
     }
 }
 
+const tmdbApiKey = process.env.TMDB_KEY;
+// const tmdbApiKey = "replace for development";
 export async function createNewMovieTmdb(tmdbId: number): Promise<Movie> {
     try {
         let res = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${tmdbApiKey}&language=de-DE&append_to_response=release_dates`);

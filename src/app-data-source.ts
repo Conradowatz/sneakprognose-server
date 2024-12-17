@@ -2,6 +2,7 @@ import {DataSource} from "typeorm";
 
 export const AppDataSource = new DataSource({
     "type": "mariadb",
+    // replace with localhost for development database
     //"host": "localhost",
     "host": process.env.DB_HOST,
     "port": 3306,
