@@ -5,7 +5,6 @@ import {Hint} from "./entity/Hint";
 import {Movie} from "./entity/Movie";
 import {Cinema} from "./entity/Cinema";
 import {DateTime} from "luxon";
-import {ConnectionIsNotSetError} from "typeorm";
 import {createTransport} from "nodemailer";
 
 export function registerApiRoutes(app: Express) {
@@ -276,7 +275,7 @@ export async function createNewMovieTmdb(tmdbId: number): Promise<Movie> {
     try {
         let res = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${tmdbApiKey}&language=de-DE&append_to_response=release_dates`);
         if (res.status != 200) {
-            console.error("Error loading movie: " + res.statusText);
+            console.error(`Error loading movie with id ${tmdbId}: ${res.statusText}`);
             return null;
         }
         let apiMovie = await res.json();
@@ -330,7 +329,9 @@ export async function updateMovieInfos() {
         .getMany();
     for (let movie of movies) {
         let updatedMovie = await createNewMovieTmdb(movie.tmdbId);
-        await AppDataSource.getRepository(Movie).save(updatedMovie);
+        if (updatedMovie != null) {
+            await AppDataSource.getRepository(Movie).save(updatedMovie);
+        }
     }
     console.log("Updated movie infos.");
 }
